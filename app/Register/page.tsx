@@ -15,6 +15,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 
+
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
