@@ -11,7 +11,9 @@ import {
   Button,
   Grid,
 } from "@mui/material";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 
@@ -20,10 +22,29 @@ import { useState } from "react";
 const login = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const router = useRouter()
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    try {
+      const auth = getAuth()
+      await signInWithEmailAndPassword(auth, email, password)
+      setError("")
 
-  }
+      console.log("Login suceeded")
+
+      router.push("/") //navigate to homepage
+      
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("An error occured")
+      }
+      console.log("Login failed", error)
+    }
+  } 
+
 
 
   return (
@@ -43,7 +64,7 @@ const login = () => {
           <LockOutlined />
         </Avatar>
         <Typography variant="h5">Login</Typography>
-        <Box sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={(error) => {error.preventDefault(), handleLogin()}}sx={{ mt: 1 }}>
           <TextField
             margin="normal"
             required
@@ -78,6 +99,7 @@ const login = () => {
           >
             Login
           </Button>
+          {error && <Typography color="error">{error}</Typography>}
           <Grid container justifyContent={"flex-end"}>
             <Grid item>
               <Link href="Register"> Don't have a account? Register here</Link>
