@@ -65,13 +65,15 @@ function ListThreads() {
                 <p className="text-sm text-slate-500">{new Date(thread.creationDate).toLocaleString()}</p>
                 <p className="mt-2 text-sm">{thread.description}</p>
                 {user && ( // Conditionally render the buttons based on user authentication status
-                  <div>
-                    <button onClick={() => lockThread(thread.id)}>Lock</button>
-                    <button onClick={() => unlockThread(thread.id)}>Unlock</button>
-                    <button onClick={() => deleteThread(thread.id)}> Delete</button>
+                  <div className='flex gap-2 text-sm mt-2'>
+                    {thread.locked ? (
+                      <button className='rounded bg-white' onClick={() => unlockThread(thread.id)}> Unclock </button>
+                    ) : (
+                      <button className='rounded bg-red-500' onClick={() => lockThread(thread.id)}> Lock </button>
+                    )}
+                    <button onClick={() => deleteThread(thread.id)}>Delete</button>
                   </div>
                 )}
-                
 
               </div>
             ))
@@ -83,3 +85,4 @@ function ListThreads() {
 }
 
 export default ListThreads;
+
