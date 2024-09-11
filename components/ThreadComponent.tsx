@@ -1,5 +1,11 @@
 import Link from "next/link";
+
+
+
+
+
 export default function ThreadComponent() {
+    
     return (
         <main className="ml-5 mr-5">
             <div className="flex flex-col gap-4">
