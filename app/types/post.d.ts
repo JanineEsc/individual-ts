@@ -6,24 +6,32 @@ type User = {
 }
 
 type Thread =  {
-  id: number;
+  id: string;
 	title: string;
 	category: ThreadCategory;
 	creationDate: string;
 	description: string;
 	creator: User;
-  comments: ThreadComment[];
+  comments: ThreadComment[]; 
+  locked?: booelean; 
+  
+  
 }
 
 type QNAThread = Thread & {
   category: "QNA";
   isAnswered: boolean;
   commentAnswerId?: number;
+  
 }
 
 type ThreadComment = {
-  id: number;
-  thread: number;
+  id: string;
+  thread: string;
   content: string;
   creator: User;
+  replies?: ThreadComment[];
+  likes?: number;
+
 }
+
