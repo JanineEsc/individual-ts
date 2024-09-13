@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { auth, db } from '@/firebase/config';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import { onAuthStateChanged } from 'firebase/auth';
 
 
 
 const ListThreads = () => {
   const [threads, setThreads] = useState<QNAThread[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const user = true; // Replace with actual user authentication logic
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true); 
+
 
   useEffect(() => {
     const fetchThreads = async () => {
@@ -27,19 +29,13 @@ const ListThreads = () => {
     fetchThreads();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      setIsLoggedIn(!!user);
+    });
 
-
-  const deleteThread = async (id: string) => {
-    try {
-      const threadRef = doc(db, 'threads', id);
-      await deleteDoc(threadRef);
-      const updatedThreads = threads.filter(thread => thread.id !== id);
-      setThreads(updatedThreads);
-    } catch (error) {
-      console.error('Error deleting thread:', error);
-      setError('Error deleting thread.');
-    }
-  };
+    return () => unsubscribe();
+  }, []);
 
 
   const toggleLock = async (threadId: string, isLocked: boolean) => {
@@ -74,9 +70,11 @@ const ListThreads = () => {
               <p className="text-sm text-slate-500">{new Date(thread.creationDate).toLocaleString()}</p>
               </div>
               <div className="">
-              <button onClick={() => toggleLock(thread.id, thread.locked)} className="text-black py-3">
-                {thread.locked ? <LockIcon /> : <LockOpenIcon />}
-              </button>
+              {isLoggedIn && (
+                <button onClick={() => toggleLock(thread.id, thread.locked)} className="text-black py-3">
+                  {thread.locked ? <LockIcon /> : <LockOpenIcon />}
+                </button>
+              )}
                 
               </div>
             </div>
