@@ -1,12 +1,13 @@
 "use client";
 
 import Navbar from '@/app/_components/navbar';
-import { db } from '@/firebase/config';
+import { auth, db } from '@/firebase/config';
 import useAuth from '@/lib/useAuth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import CheckIcon from '@mui/icons-material/Check';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const ThreadDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,7 @@ const ThreadDetail = () => {
   const [comment, setComment] = useState<string>("");
   const [checkAnswer, setCheckAnswer] = useState<string | null>(null)
   const [reply, setReply] = useState<{ [key: string]: string }>({});
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true); 
   const user = useAuth();
 
 
@@ -32,6 +34,14 @@ const ThreadDetail = () => {
     fetchThread();
   }, [id]);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      setIsLoggedIn(!!user);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // Commenting on the thread
   const handleAddComment = async () => {
     if (user && thread && comment) {
@@ -42,6 +52,7 @@ const ThreadDetail = () => {
         creator: { userName: user.displayName || "Anonymous", password: "" }, // Check it later
         replies: [], // initialize replies array
         likes: 0,
+        isAnswer: false
       };
 
       const updatedThread = {
@@ -99,12 +110,6 @@ const ThreadDetail = () => {
     setCheckAnswer(preId => (preId === commentId ? null : commentId))
   }
 
-
-
-
-
-
-
   if (!thread) {
     return <p className="text-red-500 text-center text-8xl">Thread not found.</p>;
   }
@@ -139,7 +144,7 @@ const ThreadDetail = () => {
                         </p>
                         <p className="text-white text-sm flex p-1 justify-between ">
                           {comment.creator.userName}
-                          {thread.category === 'QNA' && (
+                          {thread.category === 'QNA' && isLoggedIn && (
                             <button
                               className="flex items-center bg-gray-950 float right "
                               onClick={() => toggleCheck(comment.id)}
@@ -195,7 +200,8 @@ const ThreadDetail = () => {
                       <button
                         className="text-emerald-500 rounded-md px-5 w-13 h-[50px] hover:bg-emerald-800 bg-white absolute right-9"
                         onClick={handleAddComment}
-                      >
+                        title={!user ? "You must be logged in" : ""}
+                        >
                         Comment
                       </button>
                     </div>
