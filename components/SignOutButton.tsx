@@ -22,7 +22,7 @@ const SignOutButton = () => {
   };
 
   return (
-    <Button variant="contained" color="secondary" onClick={handleSignOut}>
+    <Button className="bg-gray-950 text-white font-serif" onClick={handleSignOut}>
       Sign Out
     </Button>
   );
