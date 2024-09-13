@@ -1,103 +1,89 @@
-
-
-
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getAuth, onAuthStateChanged } from 'firebase/auth'; // Import Firebase Auth
+import { collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { db } from '@/firebase/config';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+
+
 
 const ListThreads = () => {
-  const [threads, setThreads] = useState<Thread[]>([]);
+  const [threads, setThreads] = useState<QNAThread[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null); // State to store authenticated user
+  const user = true; // Replace with actual user authentication logic
 
   useEffect(() => {
-    const auth = getAuth(); // Initialize Firebase Auth
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // User is signed in, set the user state
-        setUser(user);
-      } else {
-        // User is signed out, clear the user state
-        setUser(null);
+    const fetchThreads = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'threads'));
+        const threadsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as QNAThread[];
+        setThreads(threadsData);
+      } catch (error) {
+        console.error('Error fetching threads from Firestore:', error);
+        setError('Error fetching threads from Firestore.');
       }
-    });
+    };
 
-    // Cleanup the listener on component unmount
-    return () => unsubscribe();
+    fetchThreads();
   }, []);
 
-  useEffect(() => {
-    const savedThreads = localStorage.getItem('threads');
-    if (savedThreads) {
-      const parsedThreads = JSON.parse(savedThreads).map((thread: Thread) => ({
-        ...thread,
-        locked: thread.locked || false,
-      }));
-      setThreads(parsedThreads);
-    } else {
-      setError('No threads found in localStorage.');
+
+
+  const deleteThread = async (id: string) => {
+    try {
+      const threadRef = doc(db, 'threads', id);
+      await deleteDoc(threadRef);
+      const updatedThreads = threads.filter(thread => thread.id !== id);
+      setThreads(updatedThreads);
+    } catch (error) {
+      console.error('Error deleting thread:', error);
+      setError('Error deleting thread.');
     }
-  }, []);
-
-  const deleteThread = (id: number) => {
-    const updatedThreads = threads.filter((thread) => thread.id !== id);
-    setThreads(updatedThreads);
-    localStorage.setItem('threads', JSON.stringify(updatedThreads));
-    console.log('Updated threads:', updatedThreads);
   };
 
-  const lockThread = (id: number) => {
-    const updatedThreads = threads.map((thread) =>
-      thread.id === id ? { ...thread, locked: true } : thread
-    );
-    setThreads(updatedThreads);
-    localStorage.setItem('threads', JSON.stringify(updatedThreads));
+
+  const toggleLock = async (threadId: string, isLocked: boolean) => {
+    try {
+      const docRef = doc(db, 'threads', threadId);
+      await updateDoc(docRef, { locked: !isLocked });
+      const updatedThreads = threads.map(thread =>
+        thread.id === threadId ? { ...thread, locked: !isLocked } : thread
+      );
+      setThreads(updatedThreads);
+    } catch (error) {
+      setError('Error locking/unlocking thread');
+      console.error('Error locking/unlocking thread:', error);
+    }
   };
 
-  const unlockThread = (id: number) => {
-    const updatedThreads = threads.map((thread) =>
-      thread.id === id ? { ...thread, locked: false } : thread
-    );
-    setThreads(updatedThreads);
-    localStorage.setItem('threads', JSON.stringify(updatedThreads));
-  };
+
+
+
 
   return (
-    <div>
-      {error ? (
-        <p className="text-red-500 text-xs italic">{error}</p>
-      ) : (
-        threads.map((thread) => (
-          <div key={thread.id} className="justify-between rounded items-center mb-4 p-4 border border-white w-[600px]">
-            {thread.locked ? (
-              <p className="text-red-500">This thread is locked and cannot be accessed.</p>
-            ) : (
+      <div>
+        {error ? (
+          <p className="text-red-500 text-xs italic">{error}</p>
+        ) : (
+          threads.map(thread => (
+            <div key={thread.id} className="flex justify-between rounded items-center mb-4 p-6 border bg-gray-600 text-white w-[600px]">
+              <div className="">
               <Link href={`/threads/${thread.id}`}>{thread.title}</Link>
-            )}
-            <p className="mt-2 text-sm">{thread.category}</p>
-            <p className="text-sm text-slate-500">{new Date(thread.creationDate).toLocaleString()}</p>
-            <p className="mt-2 text-sm">{thread.description}</p>
-
-            {/* Conditionally render buttons based on Firebase authentication status */}
-            {user && (
-              <div className="flex gap-2 text-sm mt-2">
-                {thread.locked ? (
-                  <button className="rounded bg-white" onClick={() => unlockThread(thread.id)}>
-                    Unlock
-                  </button>
-                ) : (
-                  <button className="rounded bg-red-500" onClick={() => lockThread(thread.id)}>
-                    Lock
-                  </button>
-                )}
-                <button onClick={() => deleteThread(thread.id)}>Delete</button>
+              <p className="mt-2 text-sm">{thread.category}</p>
+              <p className="mt-2 text-sm">{thread.description}</p>
+              <p className="text-sm text-slate-500">{new Date(thread.creationDate).toLocaleString()}</p>
               </div>
-            )}
-          </div>
-        ))
-      )}
-    </div>
+              <div className="">
+              <button onClick={() => toggleLock(thread.id, thread.locked)} className="text-black py-3">
+                {thread.locked ? <LockIcon /> : <LockOpenIcon />}
+              </button>
+                
+              </div>
+            </div>
+          ))
+        )}
+      </div>
   );
-};
+}
 
 export default ListThreads;
