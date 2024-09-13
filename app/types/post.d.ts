@@ -32,6 +32,7 @@ type ThreadComment = {
   creator: User;
   replies?: ThreadComment[];
   likes?: number;
+  isAnswer: boolean;
 
 }
 
