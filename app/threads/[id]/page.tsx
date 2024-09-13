@@ -141,7 +141,7 @@ const ThreadDetail = () => {
                           {comment.creator.userName}
                           {thread.category === 'QNA' && (
                             <button
-                              className={`flex items-center bg-gray-950 float right ${checkAnswer === comment.id ? 'bg-red' : 'bg-slate-200'}`}
+                              className="flex items-center bg-gray-950 float right "
                               onClick={() => toggleCheck(comment.id)}
                             >
                               {checkAnswer !== comment.id && <CheckIcon className="text-green-600" />}
