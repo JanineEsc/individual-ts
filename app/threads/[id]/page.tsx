@@ -18,10 +18,11 @@ const ThreadDetail = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
   const user = useAuth();
 
-
+  //Effekt för att hämta tråden från Firestore när komponenten mountas eller ID:t ändras
   useEffect(() => {
     const fetchThread = async () => {
       if (id) {
+        // hämtar tråden från firestore baserat på ID:t
         const threadDoc = await getDoc(doc(db, 'threads', id));
         if (threadDoc.exists()) {
           setThread(threadDoc.data() as Thread);
@@ -34,6 +35,8 @@ const ThreadDetail = () => {
     fetchThread();
   }, [id]);
 
+  //Effekt för att sätta en lyssnare på autentiseringen och uppdatera isLoggedIn baserat på om användaren är inloggad eller inte. 
+  //Detta används för att visa eller dölja kommentars- och svarsfunktioner baserat på om användaren är inloggad eller inte.
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, user => {
       setIsLoggedIn(!!user);
@@ -42,14 +45,16 @@ const ThreadDetail = () => {
     return () => unsubscribe();
   }, []);
 
-  // Commenting on the thread
+  // funktionen att tägga till en kommentar till tråden
   const handleAddComment = async () => {
     if (user && thread && comment) {
+
+      // skapar en ny kommentar
       const newComment: ThreadComment = {
-        id: Math.random().toString(36).substring(2, 9), // generates a random string ID
+        id: Math.random().toString(36).substring(2, 9), // generera en unik ID för kommentaren
         thread: thread.id,
         content: comment,
-        creator: { userName: user.displayName || "Anonymous", password: "" }, // Check it later
+        creator: { userName: user.displayName || "Anonymous", password: "" }, // skaparen av kommentaren
         replies: [], // initialize replies array
         likes: 0,
         isAnswer: false
@@ -61,8 +66,11 @@ const ThreadDetail = () => {
       };
 
       try {
+        // uppdatera tråden i firestore med den nya kommentaren
         const docRef = doc(db, 'threads', thread.id);
         await updateDoc(docRef, { comments: updatedThread.comments });
+
+        // uppdatera den lokal state med den nya kommentaren
         setThread(updatedThread);
         setComment(""); // Clear the comment input after adding
       } catch (error) {
@@ -98,17 +106,19 @@ const ThreadDetail = () => {
       try {
         const docRef = doc(db, 'threads', thread.id);
         await updateDoc(docRef, { comments: updatedThread.comments });
-        setThread(updatedThread); // Update local thread state with the new reply
-        setReply((prev) => ({ ...prev, [commentId]: "" })); // Clear the reply input after replying
+        setThread(updatedThread); 
+        setReply((prev) => ({ ...prev, [commentId]: "" })); 
       } catch (error) {
         console.error("Error replying to comment:", error);
       }
     }
   };
 
+  //funktion för att markera en kommentar som svar
   const toggleCheck = async (commentId: string) => {
     if (!thread) return;
 
+    //uppdatear kommentaren me det nya "checksvaret"
     const updatedComments = thread.comments.map((comment) => {
       if (comment.id === commentId) {
         return { ...comment, isAnswer: !comment.isAnswer };
@@ -120,14 +130,18 @@ const ThreadDetail = () => {
     const updatedThread = { ...thread, comments: updatedComments };
     setThread(updatedThread);
 
+    
+    //uppdaterar tråden i firestore
     try {
       await updateDoc(doc(db, 'threads', thread.id), { comments: updatedComments });
+
+      //uppdaterar checksvaret i state
       setCheckAnswer((prev) => (prev === commentId ? null : commentId));
     } catch (error) {
       console.error('Error updating document: ', error);
     }
   };
-
+  // visar att tråden inte hittades om tråden inte finns
   if (!thread) {
     return <p className="text-red-500 text-center text-8xl">Thread not found.</p>;
   }

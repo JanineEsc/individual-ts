@@ -15,9 +15,14 @@ const ListThreads = () => {
 
 
   useEffect(() => {
-    const fetchThreads = async () => {
+    // Denna funktion hämtar trådar från firestore
+    const fetchThreads = async () => { 
       try {
+
+        // denna hämtar dokument från "threads" collection i firestore
         const querySnapshot = await getDocs(collection(db, 'threads'));
+
+        //skapar en array med htreaddata från querySnapshot och hämtar dokumentets id och övriga data
         const threadsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as QNAThread[];
         setThreads(threadsData);
       } catch (error) {
@@ -26,26 +31,36 @@ const ListThreads = () => {
       }
     };
 
-    fetchThreads();
+    fetchThreads();  // anropar funktionen för att hämra trådd när komponenten renderas
   }, []);
 
+  //här sätter vi en lyssnare på autentiseringen för att uppdatera isLoggedIn när användaren loggar in eller ut
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, user => {
-      setIsLoggedIn(!!user);
+      setIsLoggedIn(!!user); // uppdaterar isLoggedIn baserat på om en användare är inloggad eller inte
     });
 
     return () => unsubscribe();
   }, []);
 
 
+  //Denna funktion låser eller låser upp en tråd baserat på dess nuvarande status
   const toggleLock = async (threadId: string, isLocked: boolean) => {
     try {
+
+      //skapar en referens till tråden som ska låsas eller låsas upp
       const docRef = doc(db, 'threads', threadId);
+
+      //uppdaterar dokumentet i firestore med den nya statusen för låsning
       await updateDoc(docRef, { locked: !isLocked });
+
+      //uppdaterar trådarna i state för att visa den nya statusen
       const updatedThreads = threads.map(thread =>
+
+        //om trådens id matchar id:t för tråden som ska låsas eller låsas upp, uppdatera trådens status
         thread.id === threadId ? { ...thread, locked: !isLocked } : thread
       );
-      setThreads(updatedThreads);
+      setThreads(updatedThreads); //uppdaterar trådarna i state
     } catch (error) {
       setError('Error locking/unlocking thread');
       console.error('Error locking/unlocking thread:', error);
