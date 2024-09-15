@@ -25,17 +25,16 @@ const login = () => {
   const [error, setError] = useState("")
   const router = useRouter()
 
-  // Denna funktion används för att logga in en användare med e-post och lösenord.
 
   const handleLogin = async () => {
     try {
-      const auth = getAuth() // hämtar autentiseringsinstansen från firebase som används för att hantera inloggning
-      await signInWithEmailAndPassword(auth, email, password) // signIngWithEmailAndPassword är en firebase-funktion som loggar in en användare med e-post och lösenord
+      const auth = getAuth() 
+      await signInWithEmailAndPassword(auth, email, password) 
       
       setError("")
       console.log("Login suceeded")
 
-      router.push("/") //navigate to homepage
+      router.push("/") 
       
     } catch (error) {
       if (error instanceof Error) {

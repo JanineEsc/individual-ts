@@ -1,7 +1,6 @@
 'use client'
 
 
-// Här importeras olika komponenter från Material-UI, ikoner, React-hooks, Next.js-länkar, och Firebase-funktioner. 
 import {
   Avatar,
   Box,
@@ -22,7 +21,7 @@ import { useRouter } from "next/navigation";
 import { auth } from '@/firebase/config'
 
 
-// Dessa är tillståndsvariabler för att hantera användarens namn, e-post, lösenord, framgångsmeddelanden och felmeddelanden.
+
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,13 +31,12 @@ const Register = () => {
   const router = useRouter()
 
   
-  // Denna funktion används för att registrera en användare med e-post och lösenord. 
+ 
   const handleRegister = async () => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
 
-      //Om registreringen lyckas, läggs användaren till i Firestore-databasen
       const db = getFirestore()
       await addDoc(collection(db, "users"), {
         uid: user.uid,
@@ -51,7 +49,7 @@ const Register = () => {
       
       console.log("Registration succesful", user.uid)
 
-      router.push("/Login") // navigerar till inloggningssidan om registreringen lyckas annars error
+      router.push("/Login") 
 
     } catch (error) { 
       if (error instanceof Error) {
@@ -64,8 +62,7 @@ const Register = () => {
     }
   }
 
-  // Här är en form för att registrera en användare med namn, e-post och lösenord med material UI-komponenter.
-  //hanterar formulärinmatning och skckar registeringsdata till databasen.
+
   return (
     <>
     <Container maxWidth="xs">
